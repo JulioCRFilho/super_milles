@@ -1,4 +1,3 @@
-import 'entity.dart';
 import 'package:equatable/equatable.dart';
 
 class Particle extends Equatable {

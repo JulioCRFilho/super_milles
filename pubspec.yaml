@@ -63,6 +63,7 @@ dependencies:
   
   # Google AI (Gemini)
   google_generative_ai: ^0.4.7
+  state_notifier: ^1.0.0
 
 dev_dependencies:
   flutter_test:

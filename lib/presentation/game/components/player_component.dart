@@ -1,8 +1,8 @@
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../domain/entities/entity.dart';
 import '../../providers/game_providers.dart';
+import '../game_world.dart';
 
 class PlayerComponent extends Component with HasGameRef {
   final WidgetRef ref;
@@ -22,10 +22,16 @@ class PlayerComponent extends Component with HasGameRef {
 
   @override
   void render(Canvas canvas) {
+    // Read player state - this should be updated by PhysicsComponent
     final player = ref.read(playerProvider);
+    final gameWorld = parent! as GameWorld;
+    final cameraX = gameWorld.cameraX;
+    
+    // Ensure we have valid player data
+    if (player.x.isNaN || player.y.isNaN) return;
     
     canvas.save();
-    canvas.translate(player.x, player.y);
+    canvas.translate(player.x - cameraX, player.y);
     canvas.scale(player.facing.toDouble(), 1.0);
     
     // Draw player sprite (simplified - would use actual sprite rendering)

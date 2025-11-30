@@ -1,16 +1,14 @@
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:math' as math;
 import '../../../domain/entities/entity.dart';
-import '../../providers/game_providers.dart';
+import '../game_world.dart';
 
 class EnemyComponent extends Component with HasGameRef {
-  final WidgetRef ref;
   final Entity enemy;
   int frame = 0;
 
-  EnemyComponent({required this.ref, required this.enemy});
+  EnemyComponent({required this.enemy});
 
   @override
   void update(double dt) {
@@ -20,8 +18,11 @@ class EnemyComponent extends Component with HasGameRef {
 
   @override
   void render(Canvas canvas) {
+    final gameWorld = parent! as GameWorld;
+    final cameraX = gameWorld.cameraX;
+    
     canvas.save();
-    canvas.translate(enemy.x, enemy.y);
+    canvas.translate(enemy.x - cameraX, enemy.y);
     
     if (enemy.isBoss) {
       final bossPulse = 1.0 + math.sin(frame * 0.1) * 0.05;

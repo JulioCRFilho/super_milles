@@ -3,17 +3,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/game_constants.dart';
 import '../../../core/models/world_theme.dart';
+import '../game_world.dart';
 
 class LevelComponent extends Component with HasGameRef {
   final WidgetRef ref;
   final List<List<int>> map;
   final WorldTheme theme;
+  late final GameWorld gameWorld;
 
   LevelComponent({required this.ref, required this.map, required this.theme});
 
   @override
+  void onMount() {
+    super.onMount();
+    gameWorld = parent! as GameWorld;
+  }
+
+  @override
   void render(Canvas canvas) {
-    final cameraX = 0.0; // Get from game world
+    final cameraX = gameWorld.cameraX;
     
     final startCol = (cameraX / GameConstants.tileSize).floor();
     final endCol = startCol + (gameRef.size.x / GameConstants.tileSize).ceil() + 1;

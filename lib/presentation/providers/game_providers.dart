@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod/legacy.dart' show StateProvider, StateNotifierProvider;
+import 'package:state_notifier/state_notifier.dart';
 import '../../domain/entities/game_state.dart';
 import '../../domain/entities/player_stats.dart';
 import '../../domain/entities/entity.dart';
@@ -125,7 +127,7 @@ class PlayerStatsNotifier extends StateNotifier<PlayerStats> {
         description: loot.description,
       );
       equipment[loot.type] = equipmentItem;
-      state = state.copyWith(equipment: equipment as Map<EquipmentSlot, Equipment>);
+      state = state.copyWith(equipment: Map<EquipmentSlot, Equipment>.from(equipment));
     }
   }
 }

@@ -1,17 +1,19 @@
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/game_constants.dart';
 import '../../core/constants/world_themes.dart';
 import '../../core/models/world_theme.dart';
 import '../../domain/entities/entity.dart';
+import '../../domain/entities/enemy_variant.dart';
 import 'components/background_component.dart';
 import 'components/level_component.dart';
 import 'components/player_component.dart';
 import 'components/enemy_component.dart';
 import 'components/particle_component.dart' show GameParticleSystemComponent;
 import 'components/floating_text_component.dart';
+import 'components/physics_component.dart';
+import 'components/input_component.dart';
 import '../providers/game_providers.dart';
 
 class GameWorld extends FlameGame with HasGameRef {
@@ -27,6 +29,10 @@ class GameWorld extends FlameGame with HasGameRef {
   Future<void> onLoad() async {
     await super.onLoad();
     initializeLevel();
+    
+    // Add physics and input systems
+    add(PhysicsComponent(ref: ref));
+    add(InputComponent(ref: ref));
   }
 
   void initializeLevel() {
@@ -48,11 +54,11 @@ class GameWorld extends FlameGame with HasGameRef {
     // Add player
     add(PlayerComponent(ref: ref));
 
-    // Add enemies
-    final enemies = ref.read(enemiesProvider);
-    for (final enemy in enemies) {
-      add(EnemyComponent(ref: ref, enemy: enemy));
-    }
+      // Add enemies
+      final enemies = ref.read(enemiesProvider);
+      for (final enemy in enemies) {
+        add(EnemyComponent(enemy: enemy));
+      }
 
     // Add particle system
     add(GameParticleSystemComponent(ref: ref));
@@ -70,7 +76,7 @@ class GameWorld extends FlameGame with HasGameRef {
         ? 60
         : GameConstants.levelWidthBase + (subStage * 10);
     final pitFrequency = isBossLevel ? 0.0 : 0.1 + (subStage * 0.03);
-    final enemyDensity = isBossLevel ? 0 : 10 - (subStage * 0.5);
+    final enemyDensity = isBossLevel ? 0.0 : 10.0 - (subStage * 0.5);
 
     map = [];
 
@@ -161,9 +167,62 @@ class GameWorld extends FlameGame with HasGameRef {
     final endX = levelWidth - 5;
     map[GameConstants.levelHeight - 3][endX] = 1;
 
-    // Spawn enemies - this would be implemented in a separate method
-    // For now, we'll set empty list and let the game logic handle spawning
-    ref.read(enemiesProvider.notifier).setEnemies([]);
+    // Spawn enemies
+    final enemies = <Entity>[];
+    final random = DateTime.now().millisecondsSinceEpoch;
+    
+    if (isBossLevel) {
+      // Boss spawn
+      final bossX = (levelWidth - 15) * GameConstants.tileSize;
+      final bossY = (GameConstants.levelHeight - 3) * GameConstants.tileSize - 32;
+      final bossHp = 3 + worldNum;
+      
+      enemies.add(Entity(
+        id: 'boss_${currentStage}',
+        type: EntityType.enemy,
+        x: bossX,
+        y: bossY,
+        w: GameConstants.bossWidth,
+        h: GameConstants.bossHeight,
+        vx: -GameConstants.enemySpeedBase * 1.5,
+        vy: 0,
+        facing: -1,
+        isBoss: true,
+        hp: bossHp,
+        maxHp: bossHp,
+        variant: currentTheme!.enemyVariant,
+        originalX: bossX,
+        originalY: bossY,
+      ));
+    } else {
+      // Standard enemies
+      final enemySpacing = [8, enemyDensity.toInt()].reduce((a, b) => a > b ? a : b);
+      for (int ex = 20; ex < levelWidth - 25; ex += enemySpacing) {
+        if (map[GameConstants.levelHeight - 2][ex] == 1 &&
+            map[GameConstants.levelHeight - 3][ex] == 0) {
+          if ((random % 10) > 3) {
+            enemies.add(Entity(
+              id: 'enemy_${ex}_${random}',
+              type: EntityType.enemy,
+              x: ex * GameConstants.tileSize,
+              y: (GameConstants.levelHeight - 3) * GameConstants.tileSize,
+              w: GameConstants.enemyWidth,
+              h: GameConstants.enemyHeight,
+              vx: -GameConstants.enemySpeedBase,
+              vy: 0,
+              facing: -1,
+              variant: currentTheme!.enemyVariant,
+              originalX: ex * GameConstants.tileSize,
+              originalY: (GameConstants.levelHeight - 3) * GameConstants.tileSize,
+              hp: 1,
+              maxHp: 1,
+            ));
+          }
+        }
+      }
+    }
+    
+    ref.read(enemiesProvider.notifier).setEnemies(enemies);
   }
 
   int getTileAt(double x, double y) {
