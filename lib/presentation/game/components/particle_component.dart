@@ -5,7 +5,7 @@ import '../../providers/game_providers.dart';
 import '../../../domain/entities/particle.dart';
 import '../game_world.dart';
 
-class GameParticleSystemComponent extends Component with HasGameRef {
+class GameParticleSystemComponent extends Component with HasGameReference {
   final WidgetRef ref;
 
   GameParticleSystemComponent({required this.ref});

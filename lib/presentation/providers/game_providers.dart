@@ -143,7 +143,7 @@ class PlayerNotifier extends StateNotifier<Entity> {
           id: 'p1',
           type: EntityType.player,
           x: GameConstants.playerStartX,
-          y: GameConstants.playerStartY,
+          y: _calculatePlayerStartY(),
           w: GameConstants.playerWidth,
           h: GameConstants.playerHeight,
           vx: 0,
@@ -151,12 +151,19 @@ class PlayerNotifier extends StateNotifier<Entity> {
           facing: 1,
         ));
 
+  static double _calculatePlayerStartY() {
+    // Ground is at (LEVEL_HEIGHT - 3) * TILE_SIZE
+    // Player should be on top of ground: groundY - playerHeight
+    final groundY = (GameConstants.levelHeight - 3) * GameConstants.tileSize;
+    return groundY - GameConstants.playerHeight;
+  }
+
   void reset() {
     state = Entity(
       id: 'p1',
       type: EntityType.player,
       x: GameConstants.playerStartX,
-      y: GameConstants.playerStartY,
+      y: _calculatePlayerStartY(),
       w: GameConstants.playerWidth,
       h: GameConstants.playerHeight,
       vx: 0,
@@ -244,4 +251,27 @@ final lootTargetIdProvider = StateProvider<String?>((ref) => null);
 
 // Loading Loot
 final isLoadingLootProvider = StateProvider<bool>((ref) => false);
+
+// Enemy Loot Map - stores loot dropped by each enemy
+final enemyLootProvider = StateNotifierProvider<EnemyLootNotifier, Map<String, GeneratedLootData>>((ref) {
+  return EnemyLootNotifier();
+});
+
+class EnemyLootNotifier extends StateNotifier<Map<String, GeneratedLootData>> {
+  EnemyLootNotifier() : super({});
+
+  void setLoot(String enemyId, GeneratedLootData loot) {
+    state = {...state, enemyId: loot};
+  }
+
+  void removeLoot(String enemyId) {
+    final newState = Map<String, GeneratedLootData>.from(state);
+    newState.remove(enemyId);
+    state = newState;
+  }
+
+  void clear() {
+    state = {};
+  }
+}
 

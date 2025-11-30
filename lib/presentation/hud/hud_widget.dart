@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/equipment_slot.dart';
+import '../../domain/entities/equipment.dart';
 import '../providers/game_providers.dart';
 import '../../core/constants/game_constants.dart';
 
-class HUDWidget extends ConsumerWidget {
+class HUDWidget extends ConsumerStatefulWidget {
   const HUDWidget({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HUDWidget> createState() => _HUDWidgetState();
+}
+
+class _HUDWidgetState extends ConsumerState<HUDWidget> {
+  Equipment? selectedItem;
+
+  @override
+  Widget build(BuildContext context) {
     final stats = ref.watch(playerStatsProvider);
     final stage = ref.watch(stageProvider);
     final autoLoot = ref.watch(autoLootProvider);
@@ -23,6 +31,15 @@ class HUDWidget extends ConsumerWidget {
     final totalAttack = stats.getTotalAttack();
     final totalDefense = stats.getTotalDefense();
     
+    final equipSlots = [
+      {'id': EquipmentSlot.helmet, 'label': 'CABEÇA', 'icon': '⛑️'},
+      {'id': EquipmentSlot.armor, 'label': 'CORPO', 'icon': '👕'},
+      {'id': EquipmentSlot.pants, 'label': 'PERNAS', 'icon': '👖'},
+      {'id': EquipmentSlot.boots, 'label': 'PÉS', 'icon': '👢'},
+      {'id': EquipmentSlot.gloves, 'label': 'MÃOS', 'icon': '🧤'},
+      {'id': EquipmentSlot.accessory, 'label': 'JOIA', 'icon': '💍'},
+    ];
+    
     return Positioned(
       top: 0,
       left: 0,
@@ -34,7 +51,7 @@ class HUDWidget extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Left Column: Stats
+              // Left Column: Stats, Lives & Equipment
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -53,10 +70,14 @@ class HUDWidget extends ConsumerWidget {
                       ],
                     ),
                     Row(
-                      children: List.generate(
-                        stats.lives.clamp(0, 5),
-                        (i) => const Text('❤', style: TextStyle(fontSize: 16)),
-                      ),
+                      children: [
+                        ...List.generate(
+                          stats.lives.clamp(0, 5),
+                          (i) => const Text('❤', style: TextStyle(fontSize: 16)),
+                        ),
+                        if (stats.lives > 5)
+                          Text('+ ${stats.lives - 5}', style: const TextStyle(fontSize: 12, color: Colors.white)),
+                      ],
                     ),
                     
                     // HP Bar
@@ -80,7 +101,7 @@ class HUDWidget extends ConsumerWidget {
                       ],
                     ),
                     
-                    // Stats
+                    // Total Stats
                     Row(
                       children: [
                         Text('ATK: $totalAttack', style: const TextStyle(color: Colors.yellow, fontSize: 10)),
@@ -107,6 +128,12 @@ class HUDWidget extends ConsumerWidget {
                               decoration: BoxDecoration(
                                 color: autoLoot ? Colors.green : Colors.grey,
                                 shape: BoxShape.circle,
+                                boxShadow: autoLoot ? [
+                                  BoxShadow(
+                                    color: Colors.lime,
+                                    blurRadius: 5,
+                                  ),
+                                ] : null,
                               ),
                             ),
                             const SizedBox(width: 4),
@@ -122,33 +149,114 @@ class HUDWidget extends ConsumerWidget {
                       ),
                     ),
                     
-                    // Equipment Grid
-                    Wrap(
-                      spacing: 4,
-                      runSpacing: 4,
-                      children: [
-                        EquipmentSlot.life,
-                        EquipmentSlot.helmet,
-                        EquipmentSlot.armor,
-                        EquipmentSlot.pants,
-                        EquipmentSlot.boots,
-                        EquipmentSlot.gloves,
-                        EquipmentSlot.accessory,
-                      ].map((slot) {
-                        final item = stats.equipment[slot];
-                        return Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.6),
-                            border: Border.all(color: Colors.white.withOpacity(0.3)),
-                          ),
-                          child: item != null
-                              ? const Icon(Icons.check, color: Colors.green, size: 16)
-                              : null,
-                        );
-                      }).toList(),
+                    const SizedBox(height: 8),
+                    
+                    // Equipment Grid (3x3 like original)
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.4),
+                        border: Border.all(color: Colors.white.withOpacity(0.2)),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        children: equipSlots.map((slotData) {
+                          final slot = slotData['id'] as EquipmentSlot;
+                          final item = stats.equipment[slot];
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                selectedItem = item;
+                              });
+                            },
+                            child: Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.6),
+                                border: Border.all(color: Colors.white.withOpacity(0.3)),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    slotData['icon'] as String,
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                  if (item != null)
+                                    Container(
+                                      width: 8,
+                                      height: 8,
+                                      margin: const EdgeInsets.only(top: 2),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.green,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
                     ),
+                    
+                    // Selected Item Detail Pop-up
+                    if (selectedItem != null)
+                      Container(
+                        margin: const EdgeInsets.only(top: 8),
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade900,
+                          border: Border.all(color: Colors.white),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              selectedItem!.name,
+                              style: const TextStyle(
+                                color: Colors.yellow,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Status: +${selectedItem!.statBoost}',
+                              style: const TextStyle(color: Colors.white, fontSize: 10),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              selectedItem!.description,
+                              style: TextStyle(
+                                color: Colors.grey.shade300,
+                                fontSize: 9,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  selectedItem = null;
+                                });
+                              },
+                              child: const Text(
+                                'FECHAR',
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 8,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -158,7 +266,9 @@ class HUDWidget extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    isBossLevel ? 'CHEFE $levelNum-$worldNum' : 'FASE $levelNum-$worldNum',
+                    isBossLevel 
+                      ? 'CHEFE $levelNum-$worldNum' 
+                      : 'FASE $levelNum-$worldNum',
                     style: TextStyle(
                       color: isBossLevel ? Colors.red : Colors.blue,
                       fontSize: 18,
@@ -188,4 +298,3 @@ class HUDWidget extends ConsumerWidget {
     );
   }
 }
-

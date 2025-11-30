@@ -5,7 +5,7 @@ import '../../providers/game_providers.dart';
 import '../../../domain/entities/floating_text.dart';
 import '../game_world.dart';
 
-class FloatingTextSystemComponent extends Component with HasGameRef {
+class FloatingTextSystemComponent extends Component with HasGameReference {
   final WidgetRef ref;
 
   FloatingTextSystemComponent({required this.ref});
@@ -26,10 +26,10 @@ class FloatingTextSystemComponent extends Component with HasGameRef {
         .where((t) => t.life > 0)
         .toList();
     
-    // Update provider only when list changes
-    final currentTexts = ref.read(floatingTextsProvider);
-    if (_localTexts.length != currentTexts.length || 
-        _localTexts.length == 0 && currentTexts.isNotEmpty) {
+        // Update provider only when list changes
+        final currentTexts = ref.read(floatingTextsProvider);
+        if (_localTexts.length != currentTexts.length || 
+            _localTexts.isEmpty && currentTexts.isNotEmpty) {
       Future.microtask(() {
         ref.read(floatingTextsProvider.notifier).updateTexts(_localTexts);
       });

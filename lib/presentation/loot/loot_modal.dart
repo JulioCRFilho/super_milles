@@ -1,20 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/equipment_slot.dart';
+import '../../domain/entities/generated_loot_data.dart';
 import '../providers/game_providers.dart';
 import '../../domain/entities/game_state.dart';
 
-class LootModal extends ConsumerWidget {
+class LootModal extends ConsumerStatefulWidget {
   const LootModal({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LootModal> createState() => _LootModalState();
+}
+
+class _LootModalState extends ConsumerState<LootModal> {
+  @override
+  void initState() {
+    super.initState();
+    // Focus on the modal to capture keyboard events
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FocusScope.of(context).requestFocus(FocusNode());
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final foundLoot = ref.watch(foundLootProvider);
     final isLoading = ref.watch(isLoadingLootProvider);
 
-    return Container(
-      color: Colors.black.withOpacity(0.8),
-      child: Center(
+    return KeyboardListener(
+      focusNode: FocusNode()..requestFocus(),
+      onKeyEvent: (KeyEvent event) {
+        if (event is RawKeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.keyE) {
+            _equipLoot(ref, true);
+          } else if (event.logicalKey == LogicalKeyboardKey.keyQ) {
+            _equipLoot(ref, false);
+          }
+        }
+      },
+      child: Container(
+        color: Colors.black.withOpacity(0.8),
+        child: Center(
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
@@ -36,51 +63,110 @@ class LootModal extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        Text(
-                          _getLootIcon(foundLoot.type),
-                          style: const TextStyle(fontSize: 48),
+                        // Item Icon/Image
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: _getRarityColor(foundLoot),
+                            border: Border.all(color: Colors.white, width: 2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Center(
+                            child: Text(
+                              _getLootIcon(foundLoot.type),
+                              style: const TextStyle(fontSize: 48),
+                            ),
+                          ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 16),
+                        // Item Name
                         Text(
                           foundLoot.name,
-                          style: const TextStyle(color: Colors.white, fontSize: 16),
+                          style: TextStyle(
+                            color: _getRarityColor(foundLoot),
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 8),
-                        Text(
-                          foundLoot.description,
-                          style: const TextStyle(color: Colors.grey, fontSize: 12),
-                        ),
-                        if (foundLoot.type != EquipmentSlot.life) ...[
-                          const SizedBox(height: 8),
-                          Text(
-                            'Novo Status: +${foundLoot.statBoost}',
-                            style: const TextStyle(color: Colors.blue, fontSize: 12),
+                        // Item Description
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            foundLoot.description,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: Colors.grey, fontSize: 14),
                           ),
-                          _buildComparison(ref, foundLoot),
-                        ],
+                        ),
                         const SizedBox(height: 16),
+                        // Item Stats
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Column(
+                            children: [
+                              if (foundLoot.type != EquipmentSlot.life) ...[
+                                Text(
+                                  'Status: +${foundLoot.statBoost}',
+                                  style: const TextStyle(
+                                    color: Colors.cyan,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                _buildComparison(ref, foundLoot),
+                              ] else ...[
+                                const Text(
+                                  'Efeito: +1 Vida Extra',
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 24),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             ElevatedButton(
                               onPressed: () => _equipLoot(ref, true),
-                              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                              child: const Text('EQUIPAR [E]'),
-                            ),
-                            if (foundLoot.type != EquipmentSlot.life) ...[
-                              const SizedBox(width: 8),
-                              ElevatedButton(
-                                onPressed: () => _equipLoot(ref, false),
-                                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                                child: const Text('RECUSAR [Q]'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                               ),
-                            ],
+                              child: const Text(
+                                'ACEITAR [E]',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            ElevatedButton(
+                              onPressed: () => _equipLoot(ref, false),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              ),
+                              child: const Text(
+                                'RECUSAR [Q]',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                            ),
                           ],
                         ),
                       ],
                     )
                   : const SizedBox(),
         ),
+      ),
       ),
     );
   }
@@ -127,13 +213,55 @@ class LootModal extends ConsumerWidget {
     }
   }
 
+  Color _getRarityColor(GeneratedLootData loot) {
+    // Determine rarity based on stat boost and name
+    if (loot.name.contains('Élfico') || loot.statBoost > 20) {
+      return Colors.purple; // Legendary
+    } else if (loot.name.contains('Mithril') || loot.statBoost > 10) {
+      return Colors.blue; // Rare
+    } else if (loot.type == EquipmentSlot.life) {
+      return Colors.red; // Life
+    } else {
+      return Colors.grey; // Normal
+    }
+  }
+
   void _equipLoot(WidgetRef ref, bool shouldEquip) {
     final foundLoot = ref.read(foundLootProvider);
+    final lootTargetId = ref.read(lootTargetIdProvider);
+    
     if (shouldEquip && foundLoot != null) {
-      ref.read(playerStatsProvider.notifier).equipItem(foundLoot);
+      if (foundLoot.type == EquipmentSlot.life) {
+        ref.read(playerStatsProvider.notifier).addLife();
+      } else {
+        ref.read(playerStatsProvider.notifier).equipItem(foundLoot);
+      }
     }
-    ref.read(foundLootProvider.notifier).state = null;
-    ref.read(gameStateProvider.notifier).state = GameState.playing;
+    
+    // Mark enemy as looted
+    if (lootTargetId != null) {
+      Future(() {
+        final enemies = ref.read(enemiesProvider);
+        if (enemies.isNotEmpty) {
+          final enemy = enemies.firstWhere(
+            (e) => e.id == lootTargetId,
+            orElse: () => enemies.first,
+          );
+          if (!enemy.isLooted) {
+            ref.read(enemiesProvider.notifier).updateEnemy(enemy.copyWith(isLooted: true));
+          }
+          // Remove loot from map
+          ref.read(enemyLootProvider.notifier).removeLoot(lootTargetId);
+        }
+      });
+    }
+    
+    // Clear loot state and return to playing - use Future to avoid build conflicts
+    Future(() {
+      ref.read(foundLootProvider.notifier).state = null;
+      ref.read(lootTargetIdProvider.notifier).state = null;
+      ref.read(gameStateProvider.notifier).state = GameState.playing;
+    });
   }
 }
 

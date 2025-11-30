@@ -5,7 +5,7 @@ class GameConstants {
   static const double jumpForce = -14.0;
   static const double moveSpeed = 6.0;
   static const double friction = 0.85;
-  static const double enemySpeedBase = 2.0;
+  static const double enemySpeedBase = 3.5;
   
   // Level Generation
   static const int levelWidthBase = 150;

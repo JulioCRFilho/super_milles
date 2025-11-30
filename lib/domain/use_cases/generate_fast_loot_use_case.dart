@@ -6,8 +6,8 @@ class GenerateFastLootUseCase {
 
   GenerateFastLootUseCase(this.repository);
 
-  GeneratedLootData call(int level) {
-    return repository.generateFastLoot(level);
+  GeneratedLootData call(int level, {String rarity = 'normal'}) {
+    return repository.generateFastLoot(level, rarity: rarity);
   }
 }
 

@@ -19,20 +19,7 @@ class LootRepositoryImpl implements LootRepository {
   }
 
   @override
-  GeneratedLootData generateFastLoot(int level) {
-    // 5% chance for a 1-UP
-    if (0.95 < (DateTime.now().millisecondsSinceEpoch % 100) / 100) {
-      return GeneratedLootData(
-        name: "COGUMELO VIDA",
-        type: EquipmentSlot.life,
-        statBoost: 1,
-        description: "Garante uma vida extra!",
-      );
-    }
-
-    final materials = ["Couro", "Ferro", "Aço", "Mithril", "Ouro", "Diamante"];
-    final material = materials[((level / 3).floor()).clamp(0, materials.length - 1)];
-
+  GeneratedLootData generateFastLoot(int level, {String rarity = 'normal'}) {
     final slots = [
       EquipmentSlot.boots,
       EquipmentSlot.helmet,
@@ -41,9 +28,34 @@ class LootRepositoryImpl implements LootRepository {
       EquipmentSlot.gloves,
       EquipmentSlot.accessory,
     ];
-    final type = slots[DateTime.now().millisecondsSinceEpoch % slots.length];
+    final random = DateTime.now().millisecondsSinceEpoch;
+    final type = slots[random % slots.length];
 
-    String name = "";
+    String material;
+    int statBoost;
+    String description;
+    String name;
+
+    switch (rarity) {
+      case 'legendary':
+        material = "Élfico";
+        statBoost = (level * 2.5).floor().clamp(1, 999) + (random % 5);
+        description = "Um artefato lendário de poder imenso!";
+        break;
+      case 'rare':
+        material = "Mithril";
+        statBoost = (level * 1.5).floor().clamp(1, 999) + (random % 3);
+        description = "Um item raro de qualidade excepcional!";
+        break;
+      case 'normal':
+      default:
+        final materials = ["Couro", "Ferro", "Aço", "Ouro"];
+        material = materials[((level / 3).floor()).clamp(0, materials.length - 1)];
+        statBoost = (level / 2).floor().clamp(1, 999) + (random % 3);
+        description = "Um item feito de ${material.toLowerCase()}.";
+        break;
+    }
+
     switch (type) {
       case EquipmentSlot.boots:
         name = "Botas de $material";
@@ -67,14 +79,11 @@ class LootRepositoryImpl implements LootRepository {
         name = "Item de $material";
     }
 
-    final baseStat = (level / 2).floor().clamp(1, double.infinity).toInt();
-    final variation = (DateTime.now().millisecondsSinceEpoch % 3).toInt();
-
     return GeneratedLootData(
       name: name,
       type: type,
-      statBoost: baseStat + variation,
-      description: "Um item feito de ${material.toLowerCase()}.",
+      statBoost: statBoost,
+      description: description,
     );
   }
 }

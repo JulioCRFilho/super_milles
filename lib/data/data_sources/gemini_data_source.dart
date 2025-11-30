@@ -18,7 +18,8 @@ class GeminiDataSource {
   }
 
   Future<GeneratedLootData> generateLoot(int level) async {
-    if (_model == null) {
+    final model = _model;
+    if (model == null) {
       // Fallback if no API key
       return _generateFallbackLoot(level);
     }
@@ -39,7 +40,7 @@ class GeminiDataSource {
         }
       ''';
 
-      final response = await _model!.generateContent([Content.text(prompt)]);
+      final response = await model.generateContent([Content.text(prompt)]);
       final text = response.text;
 
       if (text == null || text.isEmpty) {

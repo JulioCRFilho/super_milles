@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/input_provider.dart';
 
 class InputComponent extends Component
-    with HasGameRef, KeyboardHandler, TapCallbacks {
+    with HasGameReference, KeyboardHandler, TapCallbacks {
   final WidgetRef ref;
 
   InputComponent({required this.ref});
@@ -13,7 +13,7 @@ class InputComponent extends Component
   @override
   bool onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
     // Update keys immediately - store in local variable first
-    final currentKeys = ref.read(keysProvider) ?? {};
+    final currentKeys = ref.read(keysProvider);
     final keys = Map<String, bool>.from(currentKeys);
     
     // Update key states based on event type - SETAS DO TECLADO
@@ -97,10 +97,10 @@ class InputComponent extends Component
   @override
   bool onTapDown(TapDownEvent event) {
     // Handle touch input for mobile
-    final keys = Map<String, bool>.from(ref.read(keysProvider) ?? {});
+    final keys = Map<String, bool>.from(ref.read(keysProvider));
     
     // Simple touch controls - tap right side to move right, left side to move left
-    final screenWidth = gameRef.size.x;
+    final screenWidth = game.size.x;
     if (event.localPosition.x > screenWidth / 2) {
       keys['ArrowRight'] = true;
     } else {
@@ -113,7 +113,7 @@ class InputComponent extends Component
 
   @override
   bool onTapUp(TapUpEvent event) {
-    final keys = Map<String, bool>.from(ref.read(keysProvider) ?? {});
+    final keys = Map<String, bool>.from(ref.read(keysProvider));
     keys['ArrowLeft'] = false;
     keys['ArrowRight'] = false;
     ref.read(keysProvider.notifier).state = keys;
