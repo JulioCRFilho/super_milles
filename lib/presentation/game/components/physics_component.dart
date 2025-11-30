@@ -117,27 +117,19 @@ class PhysicsComponent extends Component with HasGameReference<GameWorld> {
     var newY = player.y + player.vy * dt * 60;
     if (player.vy > 0) {
       // Falling - check multiple points for better collision detection
-      final bottomY = newY + player.h;
+      // Check slightly above the bottom to catch collision before entering tile
+      final checkOffset = 1.0; // Check 1 pixel above to prevent sinking
+      final bottomY = newY + player.h - checkOffset;
       final leftCheck = game.getTileAt(player.x + 4, bottomY) == 1;
       final rightCheck = game.getTileAt(player.x + player.w - 4, bottomY) == 1;
       final centerCheck = game.getTileAt(player.x + player.w / 2, bottomY) == 1;
       
       if (leftCheck || rightCheck || centerCheck) {
-        // Snap to ground - use the lowest tile found
-        double lowestTileY = bottomY;
-        if (leftCheck) {
-          final tileY = (bottomY / GameConstants.tileSize).floor() * GameConstants.tileSize;
-          if (tileY < lowestTileY) lowestTileY = tileY;
-        }
-        if (rightCheck) {
-          final tileY = (bottomY / GameConstants.tileSize).floor() * GameConstants.tileSize;
-          if (tileY < lowestTileY) lowestTileY = tileY;
-        }
-        if (centerCheck) {
-          final tileY = (bottomY / GameConstants.tileSize).floor() * GameConstants.tileSize;
-          if (tileY < lowestTileY) lowestTileY = tileY;
-        }
-        newY = lowestTileY - player.h;
+        // Snap to ground - find the top of the tile (not the bottom)
+        // Get the tile Y coordinate and position player on top of it
+        final checkTileY = (bottomY / GameConstants.tileSize).floor();
+        final tileTopY = checkTileY * GameConstants.tileSize;
+        newY = tileTopY - player.h;
         player = player.copyWith(y: newY, vy: 0);
       } else {
         player = player.copyWith(y: newY);
@@ -157,15 +149,16 @@ class PhysicsComponent extends Component with HasGameReference<GameWorld> {
     } else {
       // Not moving vertically (vy == 0) - check if on ground with multiple points
       final bottomY = player.y + player.h;
-      final checkY = bottomY + 2; // Check slightly below
+      final checkY = bottomY + 1; // Check slightly below, but not too much
       final leftCheck = game.getTileAt(player.x + 4, checkY) == 1;
       final rightCheck = game.getTileAt(player.x + player.w - 4, checkY) == 1;
       final centerCheck = game.getTileAt(player.x + player.w / 2, checkY) == 1;
       
       if (leftCheck || rightCheck || centerCheck) {
-        // On ground, ensure correct position
-        final tileY = (bottomY / GameConstants.tileSize).floor() * GameConstants.tileSize;
-        final correctY = tileY - player.h;
+        // On ground, ensure correct position - snap to top of tile
+        final checkTileY = (checkY / GameConstants.tileSize).floor();
+        final tileTopY = checkTileY * GameConstants.tileSize;
+        final correctY = tileTopY - player.h;
         if ((player.y - correctY).abs() > 0.5) {
           player = player.copyWith(y: correctY, vy: 0);
         }

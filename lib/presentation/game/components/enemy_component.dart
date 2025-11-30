@@ -42,7 +42,27 @@ class EnemyComponent extends Component with HasGameReference<GameWorld> {
   @override
   void render(Canvas canvas) {
     final enemies = ref.read(enemiesProvider);
-    final enemy = enemies.firstWhere((e) => e.id == enemyId, orElse: () => enemies.first);
+    
+    // Find the enemy with this ID
+    Entity? enemy;
+    try {
+      enemy = enemies.firstWhere((e) => e.id == enemyId);
+    } catch (e) {
+      // Enemy not found - don't render
+      return;
+    }
+    
+    // Don't render if enemy has invalid dimensions
+    if (enemy.w <= 0 || enemy.h <= 0) {
+      return;
+    }
+    
+    // Validate enemy position (should not be NaN or infinite)
+    if (enemy.x.isNaN || enemy.y.isNaN || 
+        enemy.x.isInfinite || enemy.y.isInfinite) {
+      return;
+    }
+    
     final cameraX = game.cameraX;
 
     canvas.save();

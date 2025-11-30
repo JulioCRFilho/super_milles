@@ -23,9 +23,98 @@ class LevelComponent extends Component with HasGameReference<GameWorld> {
   @override
   void render(Canvas canvas) {
     final cameraX = game.cameraX;
+    final screenHeight = game.size.y;
     
     final startCol = (cameraX / GameConstants.tileSize).floor();
     final endCol = startCol + (game.size.x / GameConstants.tileSize).ceil() + 1;
+    
+    // Draw solid ground fill below the map to prevent "floating ground" effect
+    // Make it look like a continuation of the ground
+    final mapBottomY = GameConstants.levelHeight * GameConstants.tileSize;
+    if (mapBottomY < screenHeight) {
+      final groundDarkColor = _colorFromHex(theme.groundDark);
+      
+      // Draw ground blocks extending downward
+      for (int x = startCol; x < endCol && x < map[0].length; x++) {
+        final px = x * GameConstants.tileSize - cameraX;
+        for (double y = mapBottomY; y < screenHeight; y += GameConstants.tileSize) {
+          final blockRect = Rect.fromLTWH(px, y, GameConstants.tileSize, GameConstants.tileSize);
+          
+          // Ground gradient (same as regular ground blocks)
+          final groundGradient = LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              groundDarkColor,
+              groundDarkColor.withOpacity(0.95),
+              groundDarkColor.withOpacity(0.9),
+              Colors.black.withOpacity(0.8),
+            ],
+            stops: const [0.0, 0.2, 0.6, 1.0],
+          );
+          final paint = Paint()..shader = groundGradient.createShader(blockRect);
+          canvas.drawRect(blockRect, paint);
+          
+          // Top edge highlight
+          canvas.drawRect(
+            Rect.fromLTWH(px, y, GameConstants.tileSize, 2),
+            Paint()..color = groundDarkColor.withOpacity(0.5),
+          );
+          
+          // Left edge highlight
+          canvas.drawRect(
+            Rect.fromLTWH(px, y, 2, GameConstants.tileSize),
+            Paint()..color = groundDarkColor.withOpacity(0.3),
+          );
+          
+          // Right and bottom shadows
+          canvas.drawRect(
+            Rect.fromLTWH(px + GameConstants.tileSize - 2, y, 2, GameConstants.tileSize),
+            Paint()..color = Colors.black.withOpacity(0.3),
+          );
+          canvas.drawRect(
+            Rect.fromLTWH(px, y + GameConstants.tileSize - 2, GameConstants.tileSize, 2),
+            Paint()..color = Colors.black.withOpacity(0.4),
+          );
+          
+          // Texture pattern
+          final tileY = (y / GameConstants.tileSize).floor();
+          if ((x + tileY) % 3 == 0) {
+            final dirtPath = Path()
+              ..addOval(Rect.fromLTWH(
+                px + 4 + (x * 3 % 8),
+                y + 6 + (tileY * 5 % 8),
+                10 + (x % 4),
+                6 + (tileY % 3),
+              ));
+            canvas.drawPath(
+              dirtPath,
+              Paint()..color = Colors.black.withOpacity(0.2),
+            );
+          }
+          
+          // Grid lines
+          if (x > startCol) {
+            canvas.drawLine(
+              Offset(px, y),
+              Offset(px, y + GameConstants.tileSize),
+              Paint()
+                ..color = Colors.black.withOpacity(0.2)
+                ..strokeWidth = 1,
+            );
+          }
+          if (tileY > (mapBottomY / GameConstants.tileSize).floor()) {
+            canvas.drawLine(
+              Offset(px, y),
+              Offset(px + GameConstants.tileSize, y),
+              Paint()
+                ..color = Colors.black.withOpacity(0.2)
+                ..strokeWidth = 1,
+            );
+          }
+        }
+      }
+    }
     
     for (int y = 0; y < GameConstants.levelHeight; y++) {
       for (int x = startCol; x < endCol && x < map[0].length; x++) {
@@ -36,27 +125,103 @@ class LevelComponent extends Component with HasGameReference<GameWorld> {
           final py = y * GameConstants.tileSize;
           
           if (rawTile == 1) {
-            // Ground with enhanced details
+            // Ground block with realistic 3D appearance
+            final groundColor = _colorFromHex(theme.ground);
+            final groundDarkColor = _colorFromHex(theme.groundDark);
+            
+            // Main block with strong gradient for depth
             final groundGradient = LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                _colorFromHex(theme.ground),
-                _colorFromHex(theme.ground).withOpacity(0.9),
-                _colorFromHex(theme.groundDark),
+                groundColor,
+                groundColor.withOpacity(0.98),
+                groundDarkColor.withOpacity(0.95),
+                groundDarkColor,
               ],
-              stops: const [0.0, 0.3, 1.0],
+              stops: const [0.0, 0.15, 0.6, 1.0],
             );
             
             final rect = Rect.fromLTWH(px, py, GameConstants.tileSize, GameConstants.tileSize);
             final paint = Paint()..shader = groundGradient.createShader(rect);
             canvas.drawRect(rect, paint);
             
-            // Ground texture/pattern
-            if ((x + y) % 2 == 0) {
-              canvas.drawRect(
-                Rect.fromLTWH(px + 2, py + 2, GameConstants.tileSize - 4, GameConstants.tileSize - 4),
-                Paint()..color = _colorFromHex(theme.groundDark).withOpacity(0.2),
+            // Top edge highlight (sunlight on top)
+            canvas.drawRect(
+              Rect.fromLTWH(px, py, GameConstants.tileSize, 3),
+              Paint()..color = groundColor.withOpacity(0.6),
+            );
+            
+            // Left edge highlight (subtle 3D effect)
+            canvas.drawRect(
+              Rect.fromLTWH(px, py, 2, GameConstants.tileSize),
+              Paint()..color = groundColor.withOpacity(0.4),
+            );
+            
+            // Right edge shadow (depth)
+            canvas.drawRect(
+              Rect.fromLTWH(px + GameConstants.tileSize - 2, py, 2, GameConstants.tileSize),
+              Paint()..color = Colors.black.withOpacity(0.3),
+            );
+            
+            // Bottom edge shadow (stronger depth)
+            canvas.drawRect(
+              Rect.fromLTWH(px, py + GameConstants.tileSize - 3, GameConstants.tileSize, 3),
+              Paint()..color = Colors.black.withOpacity(0.4),
+            );
+            
+            // Dirt/soil texture pattern
+            final patternSeed = (x * 7 + y * 11) % 3;
+            if (patternSeed == 0) {
+              // Irregular dirt patches
+              final dirtPath = Path()
+                ..addOval(Rect.fromLTWH(
+                  px + 4 + (x * 3 % 8),
+                  py + 6 + (y * 5 % 8),
+                  12 + (x % 4),
+                  8 + (y % 3),
+                ))
+                ..addOval(Rect.fromLTWH(
+                  px + 20 + (x * 7 % 6),
+                  py + 18 + (y * 3 % 6),
+                  10 + (x % 3),
+                  6 + (y % 2),
+                ));
+              canvas.drawPath(
+                dirtPath,
+                Paint()..color = groundDarkColor.withOpacity(0.25),
+              );
+            }
+            
+            // Small pebbles/stones texture
+            for (int i = 0; i < 4; i++) {
+              final stoneX = px + ((x * 13 + i * 7) % (GameConstants.tileSize - 6).toInt()) + 3;
+              final stoneY = py + ((y * 17 + i * 11) % (GameConstants.tileSize - 6).toInt()) + 3;
+              final stoneSize = 1.5 + ((x + y + i) % 3) * 0.5;
+              canvas.drawCircle(
+                Offset(stoneX.toDouble(), stoneY.toDouble()),
+                stoneSize,
+                Paint()..color = groundDarkColor.withOpacity(0.4),
+              );
+            }
+            
+            // Grid lines between blocks (subtle)
+            if (x > 0) {
+              canvas.drawLine(
+                Offset(px, py),
+                Offset(px, py + GameConstants.tileSize),
+                Paint()
+                  ..color = Colors.black.withOpacity(0.15)
+                  ..strokeWidth = 1,
+              );
+            }
+            if (y > 0) {
+              canvas.drawLine(
+                Offset(px, py),
+                Offset(px + GameConstants.tileSize, py),
+                Paint()
+                  ..color = Colors.black.withOpacity(0.15)
+                  ..strokeWidth = 1,
               );
             }
             

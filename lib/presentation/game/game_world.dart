@@ -23,6 +23,7 @@ class GameWorld extends FlameGame with HasGameReference {
   WorldTheme? currentTheme;
   List<List<int>> map = [];
   double cameraX = 0;
+  int _lastEnemySyncFrame = 0;
 
   GameWorld({required this.ref});
 
@@ -34,6 +35,41 @@ class GameWorld extends FlameGame with HasGameReference {
     // Add physics and input systems
     add(PhysicsComponent(ref: ref));
     add(InputComponent(ref: ref));
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    
+    // Sync enemy components periodically to ensure all enemies are visible
+    _lastEnemySyncFrame++;
+    if (_lastEnemySyncFrame >= 60) { // Check every ~1 second at 60fps
+      _lastEnemySyncFrame = 0;
+      _syncEnemyComponents();
+    }
+  }
+
+  void _syncEnemyComponents() {
+    final enemies = ref.read(enemiesProvider);
+    final existingEnemyIds = children
+        .whereType<EnemyComponent>()
+        .map((c) => c.enemyId)
+        .toSet();
+    
+    // Add components for new enemies
+    for (final enemy in enemies) {
+      if (!existingEnemyIds.contains(enemy.id) && enemy.w > 0 && enemy.h > 0) {
+        add(EnemyComponent(enemyId: enemy.id, ref: ref));
+      }
+    }
+    
+    // Remove components for enemies that no longer exist
+    final currentEnemyIds = enemies.map((e) => e.id).toSet();
+    for (final component in children.whereType<EnemyComponent>()) {
+      if (!currentEnemyIds.contains(component.enemyId)) {
+        remove(component);
+      }
+    }
   }
 
   void initializeLevel() {
@@ -81,10 +117,26 @@ class GameWorld extends FlameGame with HasGameReference {
     // Add player
     add(PlayerComponent(ref: ref));
 
-    // Add enemies
+    // Add enemies - ensure all enemies have components
     final enemies = ref.read(enemiesProvider);
+    final existingEnemyIds = children
+        .whereType<EnemyComponent>()
+        .map((c) => c.enemyId)
+        .toSet();
+    
     for (final enemy in enemies) {
-      add(EnemyComponent(enemyId: enemy.id, ref: ref));
+      // Only add component if it doesn't already exist
+      if (!existingEnemyIds.contains(enemy.id)) {
+        add(EnemyComponent(enemyId: enemy.id, ref: ref));
+      }
+    }
+    
+    // Remove components for enemies that no longer exist
+    final currentEnemyIds = enemies.map((e) => e.id).toSet();
+    for (final component in children.whereType<EnemyComponent>()) {
+      if (!currentEnemyIds.contains(component.enemyId)) {
+        remove(component);
+      }
     }
 
     // Add particle system

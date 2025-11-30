@@ -40,154 +40,386 @@ class _LootModalState extends ConsumerState<LootModal> {
         }
       },
       child: Container(
-        color: Colors.black.withOpacity(0.8),
+        color: Colors.black.withOpacity(0.7),
         child: Center(
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.blue.shade900,
-            border: Border.all(color: Colors.white, width: 2),
-          ),
-          child: isLoading
-              ? const Text('GERANDO ITEM...', style: TextStyle(color: Colors.white))
-              : foundLoot != null
-                  ? Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          'ITEM ENCONTRADO!',
-                          style: TextStyle(
-                            color: Colors.yellow,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        // Item Icon/Image
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            color: _getRarityColor(foundLoot),
-                            border: Border.all(color: Colors.white, width: 2),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Center(
-                            child: Text(
-                              _getLootIcon(foundLoot.type),
-                              style: const TextStyle(fontSize: 48),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        // Item Name
-                        Text(
-                          foundLoot.name,
-                          style: TextStyle(
-                            color: _getRarityColor(foundLoot),
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        // Item Description
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Text(
-                            foundLoot.description,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(color: Colors.grey, fontSize: 14),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        // Item Stats
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Column(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 400),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1a1a1a),
+              border: Border.all(color: const Color(0xFF8B7355), width: 2),
+              borderRadius: BorderRadius.circular(4),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.5),
+                  blurRadius: 10,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: isLoading
+                ? const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text(
+                      'GERANDO ITEM...',
+                      style: TextStyle(
+                        color: Color(0xFFD4AF37),
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  )
+                : foundLoot != null
+                    ? Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Header with title
+                          Row(
                             children: [
-                              if (foundLoot.type != EquipmentSlot.life) ...[
-                                Text(
-                                  'Status: +${foundLoot.statBoost}',
-                                  style: const TextStyle(
-                                    color: Colors.cyan,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: _getRarityColor(foundLoot).withOpacity(0.3),
+                                  border: Border.all(
+                                    color: _getRarityColor(foundLoot),
+                                    width: 2,
+                                  ),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    _getLootIcon(foundLoot.type),
+                                    style: const TextStyle(fontSize: 28),
                                   ),
                                 ),
-                                const SizedBox(height: 8),
-                                _buildComparison(ref, foundLoot),
-                              ] else ...[
-                                const Text(
-                                  'Efeito: +1 Vida Extra',
-                                  style: TextStyle(
-                                    color: Colors.red,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      foundLoot.name,
+                                      style: TextStyle(
+                                        color: _getRarityColor(foundLoot),
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        shadows: [
+                                          Shadow(
+                                            color: _getRarityColor(foundLoot).withOpacity(0.5),
+                                            blurRadius: 4,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    if (foundLoot.type != EquipmentSlot.life)
+                                      Text(
+                                        '+${foundLoot.statBoost} Status',
+                                        style: const TextStyle(
+                                          color: Color(0xFF87CEEB),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      )
+                                    else
+                                      const Text(
+                                        '+1 Vida',
+                                        style: TextStyle(
+                                          color: Color(0xFFFF6B6B),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                  ],
                                 ),
-                              ],
+                              ),
                             ],
                           ),
-                        ),
-                        const SizedBox(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            ElevatedButton(
-                              onPressed: () => _equipLoot(ref, true),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
-                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                              ),
-                              child: const Text(
-                                'ACEITAR [E]',
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          const SizedBox(height: 10),
+                          // Description
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.4),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                color: const Color(0xFF444444),
+                                width: 1,
                               ),
                             ),
-                            const SizedBox(width: 16),
-                            ElevatedButton(
-                              onPressed: () => _equipLoot(ref, false),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                              ),
-                              child: const Text(
-                                'RECUSAR [Q]',
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            child: Text(
+                              foundLoot.description,
+                              style: const TextStyle(
+                                color: Color(0xFFCCCCCC),
+                                fontSize: 11,
+                                height: 1.3,
                               ),
                             ),
-                          ],
-                        ),
-                      ],
-                    )
-                  : const SizedBox(),
+                          ),
+                          const SizedBox(height: 8),
+                          // Comparison - Always show if there's a current item
+                          if (foundLoot.type != EquipmentSlot.life)
+                            _buildComparison(ref, foundLoot),
+                          const SizedBox(height: 10),
+                          // Buttons
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: _buildRpgButton(
+                                  onPressed: () => _equipLoot(ref, true),
+                                  label: 'EQUIPAR [E]',
+                                  color: const Color(0xFF4CAF50),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: _buildRpgButton(
+                                  onPressed: () => _equipLoot(ref, false),
+                                  label: 'RECUSAR [Q]',
+                                  color: const Color(0xFFD32F2F),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      )
+                    : const SizedBox(),
+          ),
         ),
-      ),
       ),
     );
   }
 
-  Widget _buildComparison(WidgetRef ref, foundLoot) {
+  Widget _buildComparison(WidgetRef ref, GeneratedLootData foundLoot) {
     final stats = ref.read(playerStatsProvider);
     final current = stats.equipment[foundLoot.type];
     
     if (current == null) {
-      return const Text(
-        'Espaço Vazio (EQUIPAR!)',
-        style: TextStyle(color: Colors.green, fontSize: 12),
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          color: const Color(0xFF2E7D32).withOpacity(0.3),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: const Color(0xFF4CAF50), width: 1),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.info_outline,
+              size: 14,
+              color: Color(0xFF81C784),
+            ),
+            const SizedBox(width: 6),
+            const Text(
+              'Espaço Vazio - Equipar!',
+              style: TextStyle(
+                color: Color(0xFF81C784),
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
       );
     }
     
     final diff = foundLoot.statBoost - current.statBoost;
-    return Text(
-      diff > 0 ? 'MELHOR (+$diff)' : 'PIOR ($diff)',
-      style: TextStyle(
-        color: diff > 0 ? Colors.green : Colors.red,
-        fontSize: 12,
+    final isBetter = diff > 0;
+    final isWorse = diff < 0;
+    
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: (isBetter 
+            ? const Color(0xFF2E7D32) 
+            : isWorse 
+                ? const Color(0xFFB71C1C) 
+                : const Color(0xFF424242))
+            .withOpacity(0.3),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(
+          color: isBetter 
+              ? const Color(0xFF4CAF50) 
+              : isWorse 
+                  ? const Color(0xFFD32F2F) 
+                  : const Color(0xFF757575),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isBetter 
+                    ? Icons.trending_up 
+                    : isWorse 
+                        ? Icons.trending_down 
+                        : Icons.remove,
+                size: 14,
+                color: isBetter 
+                    ? const Color(0xFF81C784) 
+                    : isWorse 
+                        ? const Color(0xFFE57373) 
+                        : const Color(0xFF9E9E9E),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                isBetter 
+                    ? 'MELHOR' 
+                    : isWorse 
+                        ? 'PIOR' 
+                        : 'IGUAL',
+                style: TextStyle(
+                  color: isBetter 
+                      ? const Color(0xFF81C784) 
+                      : isWorse 
+                          ? const Color(0xFFE57373) 
+                          : const Color(0xFF9E9E9E),
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Item Atual:',
+                    style: TextStyle(
+                      color: Color(0xFF9E9E9E),
+                      fontSize: 10,
+                    ),
+                  ),
+                  Text(
+                    current.name,
+                    style: const TextStyle(
+                      color: Color(0xFFCCCCCC),
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    '+${current.statBoost} Status',
+                    style: const TextStyle(
+                      color: Color(0xFF87CEEB),
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  const Text(
+                    'Novo Item:',
+                    style: TextStyle(
+                      color: Color(0xFF9E9E9E),
+                      fontSize: 10,
+                    ),
+                  ),
+                  Text(
+                    foundLoot.name,
+                    style: TextStyle(
+                      color: _getRarityColor(foundLoot),
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    '+${foundLoot.statBoost} Status',
+                    style: const TextStyle(
+                      color: Color(0xFF87CEEB),
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.4),
+              borderRadius: BorderRadius.circular(3),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Diferença: ',
+                  style: const TextStyle(
+                    color: Color(0xFF9E9E9E),
+                    fontSize: 10,
+                  ),
+                ),
+                Text(
+                  isBetter 
+                      ? '+$diff Status' 
+                      : isWorse 
+                          ? '$diff Status' 
+                          : 'Sem mudança',
+                  style: TextStyle(
+                    color: isBetter 
+                        ? const Color(0xFF81C784) 
+                        : isWorse 
+                            ? const Color(0xFFE57373) 
+                            : const Color(0xFF9E9E9E),
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRpgButton({
+    required VoidCallback onPressed,
+    required String label,
+    required Color color,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.2),
+        border: Border.all(color: color, width: 1.5),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(4),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+            child: Center(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

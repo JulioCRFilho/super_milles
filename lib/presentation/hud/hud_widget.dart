@@ -151,7 +151,7 @@ class _HUDWidgetState extends ConsumerState<HUDWidget> {
                     
                     const SizedBox(height: 8),
                     
-                    // Equipment Grid (3x3 like original)
+                    // Equipment Grid (2 rows of 3 slots)
                     Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
@@ -159,47 +159,101 @@ class _HUDWidgetState extends ConsumerState<HUDWidget> {
                         border: Border.all(color: Colors.white.withOpacity(0.2)),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: Wrap(
-                        spacing: 4,
-                        runSpacing: 4,
-                        children: equipSlots.map((slotData) {
-                          final slot = slotData['id'] as EquipmentSlot;
-                          final item = stats.equipment[slot];
-                          return GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                selectedItem = item;
-                              });
-                            },
-                            child: Container(
-                              width: 32,
-                              height: 32,
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.6),
-                                border: Border.all(color: Colors.white.withOpacity(0.3)),
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    slotData['icon'] as String,
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                  if (item != null)
-                                    Container(
-                                      width: 8,
-                                      height: 8,
-                                      margin: const EdgeInsets.only(top: 2),
-                                      decoration: const BoxDecoration(
-                                        color: Colors.green,
-                                        shape: BoxShape.circle,
-                                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // First row: Helmet, Armor, Pants
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: equipSlots.take(3).map((slotData) {
+                              final slot = slotData['id'] as EquipmentSlot;
+                              final item = stats.equipment[slot];
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 4),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      selectedItem = item;
+                                    });
+                                  },
+                                  child: Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withOpacity(0.6),
+                                      border: Border.all(color: Colors.white.withOpacity(0.3)),
                                     ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }).toList(),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          slotData['icon'] as String,
+                                          style: const TextStyle(fontSize: 12),
+                                        ),
+                                        if (item != null)
+                                          Container(
+                                            width: 8,
+                                            height: 8,
+                                            margin: const EdgeInsets.only(top: 2),
+                                            decoration: const BoxDecoration(
+                                              color: Colors.green,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                          const SizedBox(height: 4),
+                          // Second row: Boots, Gloves, Accessory
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: equipSlots.skip(3).map((slotData) {
+                              final slot = slotData['id'] as EquipmentSlot;
+                              final item = stats.equipment[slot];
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 4),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      selectedItem = item;
+                                    });
+                                  },
+                                  child: Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withOpacity(0.6),
+                                      border: Border.all(color: Colors.white.withOpacity(0.3)),
+                                    ),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          slotData['icon'] as String,
+                                          style: const TextStyle(fontSize: 12),
+                                        ),
+                                        if (item != null)
+                                          Container(
+                                            width: 8,
+                                            height: 8,
+                                            margin: const EdgeInsets.only(top: 2),
+                                            decoration: const BoxDecoration(
+                                              color: Colors.green,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
                       ),
                     ),
                     
